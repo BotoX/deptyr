@@ -266,22 +266,24 @@ int main(int argc, char *argv[])
           if (grantpt(pty) < 0)
                die("Unable to grantpt: %m");
 
-          printf("Opened a new pty: %s\n", ptsname(pty));
+          char ptyname[255];
+          ptsname_r(pty, ptyname, sizeof(ptyname));
+          printf("Opened a new pty: %s\n", ptyname);
           fflush(stdout);
 
           if (send_file_descriptor(socket, pty) < 0) {
                die("Unable to send the master handle: %m");
           }
 
-          setenv("REPTYR_PTY", ptsname(pty), 1);
+          setenv("REPTYR_PTY", ptyname, 1);
           {
                int f;
                setpgid(0, getppid());
                setsid();
-               f = open(ptsname(pty), O_RDONLY, 0);
+               f = open(ptyname, O_RDONLY, 0);
                dup2(f, 0);
                close(f);
-               f = open(ptsname(pty), O_WRONLY, 0);
+               f = open(ptyname, O_WRONLY, 0);
                dup2(f, 1);
                dup2(f, 2);
                close(f);
